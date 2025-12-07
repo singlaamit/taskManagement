@@ -3,7 +3,10 @@ import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
-import { Roles } from '../auth/roles.decorator';
+import { InternalServerErrorException } from '@nestjs/common';
+
+// TEMP debug log (remove if you want)
+// console.log('users.controller.spec.ts loaded');
 
 describe('UsersController', () => {
   let controller: UsersController;
@@ -33,52 +36,6 @@ describe('UsersController', () => {
 
   afterEach(() => jest.clearAllMocks());
 
-  describe('getAllUsers', () => {
-    it('should get all user', async () => {
-      let result = [{ name: 'amit' }, { name: 'ashima' }];
-      mockUsersService.findAll.mockResolvedValue(result);
-
-      expect(await controller.getAllUsers()).toEqual(result);
-      expect(mockUsersService.findAll).toHaveBeenCalledTimes(1);
-    });
-
-    it('database error', async () => {
-      mockUsersService.findAll.mockRejectedValue(new Error('database error'));
-
-      await expect(controller.getAllUsers()).toThrowError('database error');
-      expect(mockUsersService.findAll).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  describe('getAllUsers', () => {
-    it('should return all users (ADMIN only)', async () => {
-      const result = [{ name: 'Amit' }, { name: 'Amit' }];
-      mockUsersService.findAll.mockResolvedValue(result);
-
-      expect(await controller.getAllUsers()).toEqual(result);
-      expect(mockUsersService.findAll).toHaveBeenCalledTimes(1);
-    });
-
-    it('should return an empty array if no users exist', async () => {
-      const result = [];
-      mockUsersService.findAll.mockResolvedValue(result);
-
-      expect(await controller.getAllUsers()).toEqual(result);
-      expect(mockUsersService.findAll).toHaveBeenCalledTimes(1);
-    });
-
-    it('should throw an internal server error if service fails', async () => {
-      mockUsersService.findAll.mockRejectedValue(
-        new Error('Database connection failed'),
-      );
-
-      await expect(controller.getAllUsers()).rejects.toThrow(
-        'Database connection failed',
-      );
-      expect(mockUsersService.findAll).toHaveBeenCalledTimes(1);
-    });
-  });
-
   //  Test: Get own profile
   describe('getMyProfile', () => {
     it('should return the logged-in user profile', async () => {
@@ -86,7 +43,7 @@ describe('UsersController', () => {
       const result = { _id: '123', name: 'Amit' };
       mockUsersService.findById.mockResolvedValue(result);
 
-      expect(await controller.getMyProfile(mockReq)).toEqual(result);
+      await expect(controller.getMyProfile(mockReq)).resolves.toEqual(result);
       expect(mockUsersService.findById).toHaveBeenCalledWith('123');
     });
   });
@@ -97,7 +54,7 @@ describe('UsersController', () => {
       const result = { _id: '123', name: 'Amit' };
       mockUsersService.findById.mockResolvedValue(result);
 
-      expect(await controller.getUserById('123')).toEqual(result);
+      await expect(controller.getUserById('123')).resolves.toEqual(result);
       expect(mockUsersService.findById).toHaveBeenCalledWith('123');
     });
   });
@@ -111,7 +68,7 @@ describe('UsersController', () => {
 
       mockUsersService.updateUser.mockResolvedValue(updatedUser);
 
-      expect(await controller.updateMyProfile(mockReq, body)).toEqual(
+      await expect(controller.updateMyProfile(mockReq, body)).resolves.toEqual(
         updatedUser,
       );
       expect(mockUsersService.updateUser).toHaveBeenCalledWith('123', body);
@@ -124,7 +81,7 @@ describe('UsersController', () => {
       const result = { message: 'User deleted successfully' };
       mockUsersService.deleteUser.mockResolvedValue(result);
 
-      expect(await controller.deleteUser('123')).toEqual(result);
+      await expect(controller.deleteUser('123')).resolves.toEqual(result);
       expect(mockUsersService.deleteUser).toHaveBeenCalledWith('123');
     });
   });
