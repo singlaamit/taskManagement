@@ -2,8 +2,8 @@ pipeline {
   agent any
 
   environment {
-    FTP_HOST = "82.180.143.253"     // You will fill this
-    FTP_PORT = "21"                  // Most FTP servers use port 21
+    FTP_HOST = "82.180.143.253"     // fill this
+    FTP_PORT = "21"
     FTP_PATH = "/domains/mystylist.in/public_html/tasl-api"
   }
 
@@ -20,19 +20,26 @@ pipeline {
       }
     }
 
-    stage('Run Tests') {
+    stage('Run Tests (In-Band Fix)') {
       steps {
-        bat 'npm test'
+        // Running Jest in-band prevents worker crashes
+        bat 'npm test -- --runInBand'
       }
     }
 
     stage('Build Project') {
+      when {
+        expression { currentBuild.currentResult == null || currentBuild.currentResult == 'SUCCESS' }
+      }
       steps {
         bat 'npm run build'
       }
     }
 
     stage('Zip Build Files') {
+      when {
+        expression { currentBuild.currentResult == null || currentBuild.currentResult == 'SUCCESS' }
+      }
       steps {
         script {
           def ZIP_NAME = "build_${env.BUILD_NUMBER}.zip"
@@ -46,6 +53,9 @@ pipeline {
     }
 
     stage('Upload to FTP Server') {
+      when {
+        expression { currentBuild.currentResult == null || currentBuild.currentResult == 'SUCCESS' }
+      }
       steps {
         withCredentials([usernamePassword(credentialsId: 'ftp-creds', usernameVariable: 'FTP_USER', passwordVariable: 'FTP_PASS')]) {
           bat """
@@ -62,10 +72,10 @@ pipeline {
 
   post {
     success {
-      echo "Deployment completed successfully!"
+      echo "Pipeline completed successfully!"
     }
     failure {
-      echo "Deployment failed — check logs."
+      echo "Pipeline failed — check logs."
     }
   }
 }
