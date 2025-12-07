@@ -4,7 +4,7 @@ pipeline {
   environment {
     FTP_HOST = "82.180.143.253"     // fill this
     FTP_PORT = "21"
-    FTP_PATH = "/domains/mystylist.in/public_html/tasl-api"
+    FTP_PATH = "/tasl-api"
   }
 
   stages {
