@@ -33,13 +33,48 @@ describe('UsersController', () => {
 
   afterEach(() => jest.clearAllMocks());
 
-  //  Test: Get all users (ADMIN)
+  describe('getAllUsers', () => {
+    it('should get all user', async () => {
+      let result = [{ name: 'amit' }, { name: 'ashima' }];
+      mockUsersService.findAll.mockResolvedValue(result);
+
+      expect(await controller.getAllUsers()).toEqual(result);
+      expect(mockUsersService.findAll).toHaveBeenCalledTimes(1);
+    });
+
+    it('database error', async () => {
+      mockUsersService.findAll.mockRejectedValue(new Error('database error'));
+
+      await expect(controller.getAllUsers()).toThrowError('database error');
+      expect(mockUsersService.findAll).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('getAllUsers', () => {
     it('should return all users (ADMIN only)', async () => {
       const result = [{ name: 'Amit' }, { name: 'Amit' }];
       mockUsersService.findAll.mockResolvedValue(result);
 
       expect(await controller.getAllUsers()).toEqual(result);
+      expect(mockUsersService.findAll).toHaveBeenCalledTimes(1);
+    });
+
+    it('should return an empty array if no users exist', async () => {
+      const result = [];
+      mockUsersService.findAll.mockResolvedValue(result);
+
+      expect(await controller.getAllUsers()).toEqual(result);
+      expect(mockUsersService.findAll).toHaveBeenCalledTimes(1);
+    });
+
+    it('should throw an internal server error if service fails', async () => {
+      mockUsersService.findAll.mockRejectedValue(
+        new Error('Database connection failed'),
+      );
+
+      await expect(controller.getAllUsers()).rejects.toThrow(
+        'Database connection failed',
+      );
       expect(mockUsersService.findAll).toHaveBeenCalledTimes(1);
     });
   });
